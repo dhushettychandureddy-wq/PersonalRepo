@@ -82,10 +82,17 @@ function App() {
     const buttonHeight = rect?.height ?? 60;
     const { padX, padY } = getSafePadding();
 
-    const maxX = Math.max(padX, window.innerWidth - buttonWidth - padX);
-    const maxY = Math.max(padY, window.innerHeight - buttonHeight - padY);
-    const minX = padX;
-    const minY = padY;
+    // Use visualViewport for better mobile support, fallback to window dimensions
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+
+    // Add extra padding to ensure button stays well within bounds
+    const extraPadding = 20;
+    const minX = padX + extraPadding;
+    const minY = padY + extraPadding;
+    // Limit maxX to 600px to keep button on left side of screen
+    const maxX = Math.min(600, Math.max(minX, viewportWidth - buttonWidth - padX - extraPadding));
+    const maxY = Math.max(minY, viewportHeight - buttonHeight - padY - extraPadding);
 
     const distanceFromPointer = (x: number, y: number) => {
       const { x: px, y: py } = pointerRef.current;
@@ -105,6 +112,10 @@ function App() {
       newY = minY + Math.random() * Math.max(1, maxY - minY);
       attempts += 1;
     }
+
+    // Final clamp to ensure button never goes outside viewport
+    newX = Math.max(minX, Math.min(newX, maxX));
+    newY = Math.max(minY, Math.min(newY, maxY));
 
     setNoButtonPosition({ x: newX, y: newY });
 
@@ -186,7 +197,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-red-50 to-rose-100 flex items-center justify-center overflow-hidden relative px-3 sm:px-6 py-6 sm:py-10">
+    <div className="min-h-screen max-h-screen bg-gradient-to-br from-pink-100 via-red-50 to-rose-100 flex items-center justify-center overflow-hidden relative px-3 sm:px-6 py-6 sm:py-10 fixed inset-0">
       {hearts.map((heart) => (
         <div
           key={heart.id}
